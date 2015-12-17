@@ -615,7 +615,7 @@ public class Util {
 		return index;
 	}
 
-	public static int[] predictGiga(double[] prob) {
+	public static int[] predictGigaSoftmax(double[] prob) {
 		int[] ans = new int[prob.length];
 		double total = 1.0;
 		for (int i = 0; i < 10; i++) {
@@ -636,10 +636,33 @@ public class Util {
 		return ans;
 	}
 
-	public static double calcGigaAccuracy(double[] predictProb, int[] titleVec) {
-		int[] p = predictGiga(predictProb);
+	public static int[] predictGigaSigmod(double[] prob) {
+		int[] ans = new int[prob.length];
+		for (int i = 0; i < prob.length; i++) {
+			if (prob[i] > 0.5) {
+				ans[i] = 1;
+			}
+		}
+		return ans;
+	}
+
+	public static double calcGigaAccuracySoftmax(double[] predictProb, int[] titleVec) {
+		int[] p = predictGigaSoftmax(predictProb);
 		int sum = 0;
 		int correct = 0;
+		for (int i = 0; i < p.length; i++) {
+			sum += (p[i] + titleVec[i]) >= 1 ? 1 : 0;
+			if (p[i] == 1 && titleVec[i] == 1) {
+				correct++;
+			}
+		}
+		return (double) correct / sum;
+	}
+
+	public static double calcGigaAccuracySigmod(double[] predictProb, int[] titleVec) {
+		int[] p = predictGigaSigmod(predictProb);
+		double sum = 0;
+		double correct = 0;
 		for (int i = 0; i < p.length; i++) {
 			sum += (p[i] + titleVec[i]) >= 1 ? 1 : 0;
 			if (p[i] == 1 && titleVec[i] == 1) {

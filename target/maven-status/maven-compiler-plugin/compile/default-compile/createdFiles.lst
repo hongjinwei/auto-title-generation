@@ -3,6 +3,7 @@ auto_title_generation/cnn/utils/Util$3.class
 auto_title_generation/cnn/utils/Util$4.class
 auto_title_generation/cnn/core/CNN$4.class
 auto_title_generation/cnn/utils/Util$2.class
+auto_title_generation/cnn/dataset/Passage.class
 auto_title_generation/cnn/dataset/Dataset$1.class
 auto_title_generation/cnn/utils/Util$5.class
 auto_title_generation/cnn/core/CNN$7.class
@@ -22,6 +23,7 @@ auto_title_generation/cnn/utils/Util.class
 auto_title_generation/cnn/core/Layer$LayerType.class
 auto_title_generation/cnn/utils/TestArray.class
 auto_title_generation/cnn/core/CNN$8$1.class
+auto_title_generation/corpus/PassageHandler.class
 auto_title_generation/Main.class
 auto_title_generation/cnn/utils/Util$1.class
 auto_title_generation/cnn/core/RunCNN$1.class
@@ -39,7 +41,6 @@ auto_title_generation/cnn/core/CNN.class
 auto_title_generation/cnn/utils/Util$6.class
 auto_title_generation/cnn/core/CNN$10.class
 auto_title_generation/cnn/core/CNN$9.class
-auto_title_generation/corpus/Passage.class
 auto_title_generation/cnn/dataset/Dataset.class
 auto_title_generation/cnn/utils/TestArray$1.class
 auto_title_generation/corpus/Dictionary.class

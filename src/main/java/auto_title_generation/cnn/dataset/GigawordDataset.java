@@ -15,19 +15,65 @@ import auto_title_generation.corpus.Title;
 
 public class GigawordDataset {
 
-	private List<Passage> passages = new ArrayList<Passage>();
-	private String[] fileList;
+	private List<File> passages = new ArrayList<File>();
 
-	public int getDataNum() {
+	int wordvecLen = 0;
+
+	int padding = 0;
+
+	int passage_max_len = 0;
+
+	public GigawordDataset(int wordvecLen, int padding, int passage_max_len) {
+		this.wordvecLen = wordvecLen;
+		this.padding = padding;
+		this.passage_max_len = passage_max_len;
+	}
+
+	public int getSize() {
 		return passages.size();
 	}
 
 	public Passage getPassage(int index) {
-		return passages.get(index);
+		File f = passages.get(index);
+		return file2passage(f);
 	}
 
-	public Iterator<Passage> iter() {
+	public Iterator<File> iter() {
 		return passages.iterator();
+	}
+
+	private Passage file2passage(File f) {
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(f));
+			try {
+				String line;
+				StringBuffer sb = new StringBuffer();
+				String titleString = br.readLine();
+				while ((line = br.readLine()) != null) {
+					sb.append(line);
+				}
+				String passage = sb.toString();
+				List<double[]> ans = PassageHandler.passage2vec(passage);
+
+				double[] tmp = new double[wordvecLen * (2 * padding + passage_max_len)];
+				int j = padding * wordvecLen;
+				for (int k = 0; k < ans.size() && j < tmp.length; k++) {
+					double[] vec = ans.get(k);
+					for (int l = 0; l < vec.length && j < tmp.length; l++) {
+						tmp[j] = vec[l];
+						j++;
+					}
+				}
+				return new Passage(tmp, Title.getTitleVec(titleString));
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+				br.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	/**
@@ -38,7 +84,7 @@ public class GigawordDataset {
 	 *            用于处理文本size normalization
 	 */
 	public static GigawordDataset loadGiga(int wordvecLen, int passage_max_len, int padding) {
-		GigawordDataset dataset = new GigawordDataset();
+		GigawordDataset dataset = new GigawordDataset(wordvecLen, padding, passage_max_len);
 		String passagePath = CommandLine.getCorpusDir() + "newsourcetext/";
 		System.out.println(passagePath);
 		File file = new File(passagePath);
@@ -48,46 +94,25 @@ public class GigawordDataset {
 			if (tempList[i].isFile() && tempList[i].getName().startsWith("AFP")) {
 				// 读取某个文件夹下的所有文件
 				System.out.println("(" + i + "/" + tempList.length + ")文件：" + tempList[i]);
-				try {
-					BufferedReader br = new BufferedReader(new FileReader(tempList[i]));
-					try {
-						String line;
-						StringBuffer sb = new StringBuffer();
-						String titleString = br.readLine();
-						while ((line = br.readLine()) != null) {
-							sb.append(line);
-						}
-						String passage = sb.toString();
-						List<double[]> ans = PassageHandler.passage2vec(passage);
-						if (maxlen < ans.size()) {
-							maxlen = ans.size();
-						}
-
-						double[] tmp = new double[wordvecLen * (2 * padding + passage_max_len)];
-						int j = padding * wordvecLen;
-						for (int k = 0; k < ans.size() && j < tmp.length; k++) {
-							double[] vec = ans.get(k);
-							for (int l = 0; l < vec.length && j < tmp.length; l++) {
-								tmp[j] = vec[l];
-								j++;
-							}
-						}
-						dataset.passages.add(new Passage(tmp, Title.getTitleVec(titleString)));
-					} catch (Exception e) {
-						// TODO: handle exception
-					}
-				} catch (Exception e) {
-
-				}
+				dataset.passages.add(tempList[i]);
 			}
 		}
-		Dictionary.getDictionary().clear();
-		System.out.println("maxlen:" + maxlen);
+		System.out.println("total passages num :" + dataset.passages.size());
+		// System.out.println("maxlen:" + maxlen);
 		return dataset;
 	}
 
-	public void clear() {
+	public void clearAll() {
 		this.passages.clear();
+	}
+
+	/**
+	 * 清理某一篇文章，防止内存过度占用
+	 * 
+	 * @param index
+	 */
+	public void clear(int index) {
+		this.passages.set(index, null);
 	}
 
 }

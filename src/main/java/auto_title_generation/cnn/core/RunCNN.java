@@ -15,7 +15,7 @@ public class RunCNN {
 
 	private static final int WORD_VEC_LEN = 100;
 	private static final int PADDING = 50;
-	private static final int MAX_PASSAGE_LEN = 1000;
+	private static final int MAX_PASSAGE_LEN = 4000;
 
 	private static final int REPEAT = 3;
 
@@ -33,7 +33,7 @@ public class RunCNN {
 		// 1100*100
 		builder.addLayer(Layer.buildInputLayer(new Size(MAX_PASSAGE_LEN + 2 * PADDING, WORD_VEC_LEN)));
 		builder.addLayer(Layer.buildConvLayer(6, new Size(5, WORD_VEC_LEN)));
-		builder.addLayer(Layer.buildSampLayer(new Size(2, 1)));
+		builder.addLayer(Layer.buildSampLayer(new Size(3, 1)));
 		builder.addLayer(Layer.buildConvLayer(12, new Size(5, 1)));
 		builder.addLayer(Layer.buildSampLayer(new Size(2, 1)));
 		builder.addLayer(Layer.buildOutputLayer(Title.getLableSize()));
@@ -47,7 +47,7 @@ public class RunCNN {
 		cnn.train(dataset, REPEAT);// iteration times 100
 		String modelName = "model.cnn";
 		cnn.saveModel(modelName);
-		dataset.clear();
+		dataset.clearAll();
 		dataset = null;
 
 		// 预测

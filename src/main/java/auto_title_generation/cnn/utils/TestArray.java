@@ -7,9 +7,6 @@ import auto_title_generation.cnn.utils.TimedTest.TestTask;
 /**
  * 测试元素直接访问数组与通过函数访问数组的效率， 结论：函数形式访问并没有降低速度
  * 
- * @author jiqunpeng
- * 
- *         创建时间：2014-7-9 下午3:18:30
  */
 public class TestArray {
 	double[][] data;

@@ -1,11 +1,6 @@
 package auto_title_generation.cnn.utils;
 
 /**
- * ��ʱ�Ĳ��Թ���
- * 
- * @author jiqunpeng
- * 
- *         ����ʱ�䣺2014-7-8 ����8:21:56
  */
 public class TimedTest {
 	private int repeat;

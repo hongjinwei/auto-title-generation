@@ -23,6 +23,7 @@ import auto_title_generation.cnn.utils.ConcurenceRunner.TaskManager;
 import auto_title_generation.cnn.utils.Log;
 import auto_title_generation.cnn.utils.Util;
 import auto_title_generation.cnn.utils.Util.Operator;
+import auto_title_generation.corpus.Dictionary;
 
 public class CNN implements Serializable {
 	/**
@@ -114,8 +115,8 @@ public class CNN implements Serializable {
 		// 监听停止按钮
 		new Lisenter().start();
 		for (int t = 0; t < repeat && !stopTrain.get(); t++) {
-			int epochsNum = trainset.getDataNum() / batchSize;
-			if (trainset.getDataNum() % batchSize != 0)
+			int epochsNum = trainset.getSize() / batchSize;
+			if (trainset.getSize() % batchSize != 0)
 				epochsNum++;// 多抽取一次，即向上取整
 			Log.i("");
 			Log.i(t + "th iter epochsNum:" + epochsNum);
@@ -123,7 +124,7 @@ public class CNN implements Serializable {
 			int count = 0;
 			for (int i = 0; i < epochsNum; i++) {
 				Log.i("epoch: " + i);
-				int[] randPerm = Util.randomPerm(trainset.getDataNum(), batchSize);
+				int[] randPerm = Util.randomPerm(trainset.getSize(), batchSize);
 				Layer.prepareForNewBatch();
 
 				for (int index : randPerm) {
@@ -148,6 +149,8 @@ public class CNN implements Serializable {
 			}
 			Log.i("precision " + right + "/" + count + "=" + p);
 		}
+		trainset.clearAll();
+		Dictionary.getDictionary().clear();
 	}
 
 	private static AtomicBoolean stopTrain;
@@ -185,10 +188,10 @@ public class CNN implements Serializable {
 	 */
 	public double test(GigawordDataset trainset) {
 		Layer.prepareForNewBatch();
-		Iterator<Passage> iter = trainset.iter();
+
 		double right = 0;
-		while (iter.hasNext()) {
-			Passage p = iter.next();
+		for (int i = 0; i < trainset.getSize(); i++) {
+			Passage p = trainset.getPassage(i);
 			forward(p);
 			Layer outputLayer = layers.get(layerNum - 1);
 			int mapNum = outputLayer.getOutMapNum();
@@ -198,11 +201,13 @@ public class CNN implements Serializable {
 				out[m] = outmap[0][0];
 			}
 
-			right += Util.calcGigaAccuracy(out, p.getTitleVec());
+			// right += Util.calcGigaAccuracySoftmax(out, p.getTitleVec());
+			right += Util.calcGigaAccuracySigmod(out, p.getTitleVec());
+
 			// if (record.getLable().intValue() == Util.getMaxIndex(out))
 			// right++;
 		}
-		double p = 1.0 * right / trainset.getDataNum();
+		double p = 1.0 * right / trainset.getSize();
 		Log.i("precision", p + "");
 		return p;
 	}
@@ -220,9 +225,8 @@ public class CNN implements Serializable {
 			PrintWriter writer = new PrintWriter(new File(fileName));
 			Layer.prepareForNewBatch();
 
-			Iterator<Passage> iter = testset.iter();
-			while (iter.hasNext()) {
-				Passage p = iter.next();
+			for (int i = 0; i < testset.getSize(); i++) {
+				Passage p = testset.getPassage(i);
 				forward(p);
 				Layer outputLayer = layers.get(layerNum - 1);
 
@@ -252,7 +256,7 @@ public class CNN implements Serializable {
 		int count = 0;
 		int correct = 0;
 		Layer.prepareForNewBatch();
-		int[] index = Util.randomPerm(ds.getDataNum(), number);
+		int[] index = Util.randomPerm(ds.getSize(), number);
 		for (int i : index) {
 			Passage p = ds.getPassage(i);
 			forward(p);
@@ -520,7 +524,8 @@ public class CNN implements Serializable {
 			// outputLayer.setError(m, 0, 0, crossEntropy);
 			outputLayer.setError(m, 0, 0, outmaps[m] * (1 - outmaps[m]) * (target[m] - outmaps[m]));
 		}
-		return Util.calcGigaAccuracy(outmaps, passage.getTitleVec());
+		// return Util.calcGigaAccuracySoftmax(outmaps, passage.getTitleVec());
+		return Util.calcGigaAccuracySigmod(outmaps, passage.getTitleVec());
 	}
 
 	/**
@@ -542,8 +547,8 @@ public class CNN implements Serializable {
 				setSampOutput(layer, lastLayer);
 				break;
 			case output:// 计算输出层的输出,输出层是一个特殊的卷积层
-				// setConvOutput(layer, lastLayer);
-				setOutput(layer, lastLayer);
+				setConvOutput(layer, lastLayer);
+				// setOutput(layer, lastLayer);
 				break;
 			default:
 				break;
